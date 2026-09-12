@@ -1,0 +1,1657 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import {
+  Clock, Zap, ChevronDown, ArrowRight,
+  Sparkles, Play, Check, Brain,
+  Activity, TrendingUp, Star, Eye,
+  Dna, Atom, Globe, Shield,
+  BookOpen, Target, Layers, Infinity,
+  ChevronRight, Volume2, AlertCircle
+} from "lucide-react";
+
+/* ── Dynamic imports ─────────────────────────────────────── */
+const MoachToneEngine = dynamic(
+  () => import("@/components/kol/ToneEngine"),
+  { ssr: false }
+);
+
+const GhostTerminal = dynamic(
+  () => import("@/components/shared/GhostTerminal"),
+  { ssr: false }
+);
+
+/* ── Data ────────────────────────────────────────────────── */
+const TIME_LAYERS = [
+  {
+    era:     "Birth Template",
+    years:   "0 years ago",
+    color:   "#22c55e",
+    desc:    "Your original DNA before any damage, trauma, or environmental alteration. 528Hz restores this state.",
+    freq:    528,
+    access:  "DNA repair frequency. Restores original quantum information template.",
+    emoji:   "🌱",
+  },
+  {
+    era:     "Childhood Memory",
+    years:   "5-15 years ago",
+    color:   "#06b6d4",
+    desc:    "Formative experiences encoded in DNA methylation patterns. Theta 4Hz accesses these records.",
+    freq:    4,
+    access:  "Theta waves open childhood memory banks stored in hippocampal DNA.",
+    emoji:   "🧒",
+  },
+  {
+    era:     "Parents Generation",
+    years:   "25-50 years back",
+    color:   "#a855f7",
+    desc:    "Parental trauma and wisdom passed through epigenetic markers. Both parents encoded in your DNA.",
+    freq:    40,
+    access:  "Gamma coherence opens intergenerational epigenetic records.",
+    emoji:   "👨‍👩‍👦",
+  },
+  {
+    era:     "Grandparents Era",
+    years:   "50-100 years back",
+    color:   "#fbbf24",
+    desc:    "World War trauma. Depression era survival wisdom. Great events encoded across generations.",
+    freq:    7.83,
+    access:  "Schumann resonance aligns with historical electromagnetic field records.",
+    emoji:   "👴",
+  },
+  {
+    era:     "Ancient Ancestors",
+    years:   "100-1,000 years",
+    color:   "#f97316",
+    desc:    "Ancestral wisdom from specific civilizations your lineage passed through. Languages. Skills. Knowledge.",
+    freq:    111,
+    access:  "Pyramid frequency opens ancient morphic field records.",
+    emoji:   "🏛️",
+  },
+  {
+    era:     "Pre-History",
+    years:   "1,000-10,000 years",
+    color:   "#ef4444",
+    desc:    "Hunter-gatherer knowledge. Ice age survival. The birth of civilization encoded in your genome.",
+    freq:    0.5,
+    access:  "Epsilon wave accesses deepest ancestral quantum records.",
+    emoji:   "🗿",
+  },
+  {
+    era:     "Species Origin",
+    years:   "100,000+ years",
+    color:   "#6366f1",
+    desc:    "The original human template. Before division into races and languages. The unified human DNA record.",
+    freq:    963,
+    access:  "Crown activation opens species-level quantum morphic field.",
+    emoji:   "🌍",
+  },
+  {
+    era:     "Life Origin",
+    years:   "Billions of years",
+    color:   "#f0abfc",
+    desc:    "The first DNA ever created. The quantum template that all life on Earth emerged from. The source code.",
+    freq:    963,
+    access:  "Pineal gland crystal resonance opens the deepest time record known.",
+    emoji:   "✨",
+  },
+];
+
+const DNA_SCIENCE = [
+  {
+    title:   "DNA Emits Biophotons",
+    org:     "Fritz-Albert Popp — International Institute of Biophysics",
+    color:   "#fbbf24",
+    emoji:   "💡",
+    desc:    "Confirmed: DNA emits coherent laser-like light — biophotons. This light carries quantum information. Information that is not bound by normal space-time constraints.",
+    confirmed: true,
+  },
+  {
+    title:   "Ancestral Trauma in DNA",
+    org:     "Dr. Brian Dias — Emory University 2013",
+    color:   "#ef4444",
+    emoji:   "🧬",
+    desc:    "Mice trained to fear cherry blossom smell. Their offspring — who never experienced training — feared it too. Across multiple generations. Memories pass through DNA.",
+    confirmed: true,
+  },
+  {
+    title:   "DNA Quantum Coherence",
+    org:     "University of Surrey 2014",
+    color:   "#06b6d4",
+    emoji:   "⚛️",
+    desc:    "DNA maintains quantum coherence at body temperature. Longer than any man-made quantum computer. The molecule is a quantum device processing information outside normal physics.",
+    confirmed: true,
+  },
+  {
+    title:   "528Hz DNA Repair",
+    org:     "Dr. Glen Rein — JASA",
+    color:   "#22c55e",
+    emoji:   "🔬",
+    desc:    "528Hz increases UV absorption by DNA 5-9%. DNA repair enzyme activity confirmed. The molecule responds to specific sound frequencies by activating repair pathways.",
+    confirmed: true,
+  },
+  {
+    title:   "Morphic Field Memory",
+    org:     "Dr. Rupert Sheldrake",
+    color:   "#a855f7",
+    emoji:   "🌐",
+    desc:    "All DNA of a species is connected through a morphic field. The field contains collective memory of everything that species has ever experienced across all time.",
+    confirmed: false,
+  },
+  {
+    title:   "DMT — The Time Molecule",
+    org:     "Dr. Rick Strassman — University of New Mexico",
+    color:   "#f0abfc",
+    emoji:   "🔮",
+    desc:    "Pineal gland produces DMT at birth, death, and deep meditation. Every DMT experience report: time dissolves. Past present future simultaneously accessible. DNA is the antenna.",
+    confirmed: true,
+  },
+];
+
+const TIME_PROTOCOLS = [
+  {
+    name:    "Birth Template Restore",
+    hebrew:  "שִׁחְזוּר תַּבְנִית לֵידָה",
+    color:   "#22c55e",
+    freqs:   [528, 285, 40, 7.83],
+    time:    "60 minutes",
+    access:  "Restore your DNA to pre-damage state. Remove epigenetic marks from trauma. Access original template.",
+    steps: [
+      { freq:"7.83Hz",  why:"Earth baseline. Ground to present time before accessing past." },
+      { freq:"40Hz",    why:"Gamma coherence. DNA quantum state opens." },
+      { freq:"285Hz",   why:"Tissue repair. Signal sent to restore cellular structure." },
+      { freq:"528Hz",   why:"DNA repair. Original template restoration. The source code." },
+    ],
+  },
+  {
+    name:    "Ancestral Memory Access",
+    hebrew:  "גִּישָׁה לְזִכְרוֹן אֲבוֹת",
+    color:   "#fbbf24",
+    freqs:   [4, 7.83, 111, 40],
+    time:    "45 minutes",
+    access:  "Navigate ancestral memories encoded in epigenetic DNA markers. Receive wisdom from your lineage.",
+    steps: [
+      { freq:"7.83Hz",  why:"Ground to Earth. Safety baseline for time navigation." },
+      { freq:"4Hz",     why:"Theta opens ancestral memory access. Hippocampus activates." },
+      { freq:"111Hz",   why:"Pyramid frequency. Ancient records open. Right brain dominates." },
+      { freq:"40Hz",    why:"Gamma bridge. Bring information back to present consciousness." },
+    ],
+  },
+  {
+    name:    "Deep Time Navigation",
+    hebrew:  "נִיווּט זְמַן עָמֹק",
+    color:   "#a855f7",
+    freqs:   [963, 111, 0.5, 528, 40],
+    time:    "90 minutes",
+    access:  "Access pre-historical and species-level DNA records. Navigate to earliest human templates.",
+    steps: [
+      { freq:"40Hz",    why:"Corpus callosum bridge. Both brains unified for navigation." },
+      { freq:"963Hz",   why:"Pineal activation. The crystal clock opens. Time dissolves." },
+      { freq:"111Hz",   why:"Ancient consciousness state. Pyramid record access." },
+      { freq:"0.5Hz",   why:"Epsilon depth. Deepest quantum state. Species records accessible." },
+      { freq:"528Hz",   why:"DNA repair locks what you found. Integration of time data." },
+    ],
+    warning: "Have a journal ready. Information comes rapidly. Do not drive for 30 minutes after.",
+  },
+  {
+    name:    "Pineal Time Gateway",
+    hebrew:  "שַׁעַר זְמַן בַּלּוּטָה",
+    color:   "#f0abfc",
+    freqs:   [963, 852, 111, 7.83],
+    time:    "30 minutes",
+    access:  "Direct pineal gland activation. The piezoelectric crystal resonates. Time perception dissolves.",
+    steps: [
+      { freq:"7.83Hz",  why:"Earth anchor. You need to return here. Establish the cord." },
+      { freq:"852Hz",   why:"Third eye opening. Intuition channel maximizes." },
+      { freq:"963Hz",   why:"Pineal direct activation. The clock crystal fires." },
+      { freq:"111Hz",   why:"Pyramid state. Ancient initiation protocol. Time opens." },
+    ],
+    warning: "Strong altered state. Set intention before beginning. Have water ready.",
+  },
+];
+
+const PRICING = [
+  {
+    name:     "SEEKER",
+    hebrew:   "מְחַפֵּשׂ",
+    price:    0,
+    yearly:   0,
+    color:    "#64748b",
+    desc:     "Begin the time journey",
+    features: [
+      "Basic time layer visualization",
+      "3 DNA frequency protocols",
+      "Birth template restore",
+      "Science library access",
+      "Community access",
+      "7-day session history",
+      "1 user",
+    ],
+    cta:      "Start Free",
+    featured: false,
+  },
+  {
+    name:     "NAVIGATOR",
+    hebrew:   "נַוָּט",
+    price:    97,
+    yearly:   970,
+    color:    "#a855f7",
+    desc:     "Navigate your timeline",
+    features: [
+      "All time layer access",
+      "All 4 navigation protocols",
+      "Pineal activation guide",
+      "Ancestral memory journal",
+      "DNA repair frequency stack",
+      "Session recording",
+      "GESHER brain integration",
+      "Growth tracking",
+      "5 users",
+      "Email support",
+    ],
+    cta:      "Begin Navigation",
+    featured: true,
+  },
+  {
+    name:     "SOVEREIGN",
+    hebrew:   "שַׁלִּיט",
+    price:    397,
+    yearly:   3970,
+    color:    "#fbbf24",
+    desc:     "Master time & DNA",
+    features: [
+      "Everything in Navigator",
+      "Full EMET integration",
+      "GESHER + ET unified",
+      "NESHER EEG during sessions",
+      "Custom time protocols",
+      "Research data export",
+      "Quantum biology library",
+      "Priority support",
+      "Unlimited sessions",
+    ],
+    cta:      "Master Time",
+    featured: false,
+  },
+];
+
+const WHO_NEEDS = [
+  {
+    emoji:  "🧬",
+    who:    "Epigenetics Researchers",
+    pays:   "$397/mo",
+    color:  "#22c55e",
+    why:    "First platform connecting quantum biology to accessible consciousness protocols. Ancestral memory in DNA confirmed by Dias 2013. ET provides the access methodology.",
+  },
+  {
+    emoji:  "🏥",
+    who:    "Trauma Therapists",
+    pays:   "$97-$397/mo",
+    color:  "#ef4444",
+    why:    "Transgenerational trauma lives in DNA. Patients carry wounds from ancestors they never met. ET protocols help access and release these records.",
+  },
+  {
+    emoji:  "🧘",
+    who:    "Meditators & Shamans",
+    pays:   "$97/mo",
+    color:  "#a855f7",
+    why:    "Ancient traditions called it journeying. Modern quantum biology is explaining the mechanism. ET provides the scientific framework for what they already do.",
+  },
+  {
+    emoji:  "📖",
+    who:    "Genealogy Researchers",
+    pays:   "$97/mo",
+    color:  "#fbbf24",
+    why:    "DNA ancestry tests tell you WHERE your ancestors were. ET protocols help you access WHAT they experienced and WHAT they knew.",
+  },
+  {
+    emoji:  "🎨",
+    who:    "Artists & Creatives",
+    pays:   "$97/mo",
+    color:  "#06b6d4",
+    why:    "Ancestral artists, musicians, and craftspeople encoded their skills in your DNA. ET protocols help you access those inherited abilities directly.",
+  },
+  {
+    emoji:  "⚕️",
+    who:    "Integrative Physicians",
+    pays:   "$397/mo",
+    color:  "#10b981",
+    why:    "Ancestral health patterns in DNA predict modern disease. ET helps patients understand and shift their inherited biological programming.",
+  },
+];
+
+/* ── Time vortex scene ───────────────────────────────────── */
+function TimeVortexScene() {
+  const [currentLayer, setCurrentLayer] = useState(0);
+  const [spiralAngle,  setSpiralAngle]  = useState(0);
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setSpiralAngle(p => (p + 0.5) % 360);
+      setCurrentLayer(p => (p + 1) % TIME_LAYERS.length);
+    }, 60);
+    return () => clearInterval(iv);
+  }, []);
+
+  return (
+    <div className="absolute inset-0 flex items-center justify-center
+                    pointer-events-none overflow-hidden">
+
+      {/* Deep space nebula */}
+      {[
+        { x:"50%", y:"50%", c:"rgba(99,102,241,0.08)",  w:800 },
+        { x:"30%", y:"40%", c:"rgba(168,85,247,0.06)",  w:600 },
+        { x:"70%", y:"60%", c:"rgba(6,182,212,0.05)",   w:500 },
+        { x:"20%", y:"70%", c:"rgba(251,191,36,0.04)",  w:400 },
+      ].map((b,i) => (
+        <div key={i} className="absolute rounded-full" style={{
+          width:b.w, height:b.w*0.65,
+          left:b.x, top:b.y,
+          background:b.c, filter:"blur(100px)",
+          transform:"translate(-50%,-50%)",
+        }} />
+      ))}
+
+      {/* Stars */}
+      {Array.from({length:180},(_,i) => (
+        <motion.div key={i} className="absolute rounded-full"
+          style={{
+            left:`${Math.random()*100}%`,
+            top:`${Math.random()*100}%`,
+            width:Math.random()*2.5+0.5,
+            height:Math.random()*2.5+0.5,
+            background:["#6366f1","#a855f7","#06b6d4","#fbbf24","#f0abfc","#fff"][i%6],
+            opacity:Math.random()*0.5+0.1,
+          }}
+          animate={{opacity:[0.1,0.7,0.1],scale:[1,1.5,1]}}
+          transition={{duration:2+Math.random()*3,delay:Math.random()*5,repeat:Infinity}}
+        />
+      ))}
+
+      {/* DNA double helix time spiral */}
+      <div className="absolute inset-0 flex items-center justify-center">
+
+        {/* Outer time rings — each represents an era */}
+        {TIME_LAYERS.map((layer,i) => {
+          const size = 80 + i * 65;
+          const isActive = i === currentLayer % TIME_LAYERS.length;
+          return (
+            <motion.div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width:     size,
+                height:    size * 0.35,
+                border:    `1px ${isActive ? "solid" : "dashed"} ${layer.color}${isActive ? "60" : "20"}`,
+                boxShadow: isActive ? `0 0 20px ${layer.color}30` : "none",
+              }}
+              animate={{
+                rotate:       i % 2 === 0 ? 360 : -360,
+                borderColor:  isActive ? `${layer.color}` : `${layer.color}20`,
+              }}
+              transition={{
+                rotate:      { duration: 20 + i * 8, repeat: Infinity, ease: "linear" },
+                borderColor: { duration: 0.5 },
+              }}
+            >
+              {/* Era label on ring */}
+              {isActive && (
+                <div
+                  className="absolute text-[8px] font-mono font-bold"
+                  style={{
+                    top:       -14,
+                    left:      "50%",
+                    transform: "translateX(-50%)",
+                    color:     layer.color,
+                    whiteSpace:"nowrap",
+                  }}
+                >
+                  {layer.era}
+                </div>
+              )}
+            </motion.div>
+          );
+        })}
+
+        {/* DNA helix strands */}
+        {Array.from({length:20},(_,i) => {
+          const angle  = (i/20)*Math.PI*2 + (spiralAngle * Math.PI/180);
+          const radius = 30;
+          const yPos   = (i/20 - 0.5) * 400;
+          const x1     = Math.cos(angle) * radius;
+          const x2     = Math.cos(angle + Math.PI) * radius;
+          const col1   = i%2===0 ? "#a855f7" : "#3b82f6";
+          const col2   = i%2===0 ? "#3b82f6" : "#a855f7";
+          return (
+            <div key={i} className="absolute" style={{ top:`calc(50% + ${yPos}px)`, left:"50%" }}>
+              {/* Left strand dot */}
+              <motion.div
+                className="absolute rounded-full"
+                style={{
+                  width:     6, height:6,
+                  left:      x1-3, top:-3,
+                  background: col1,
+                  boxShadow:  `0 0 8px ${col1}`,
+                }}
+                animate={{ scale:[1,1.3,1] }}
+                transition={{ duration:1, delay:i*0.05, repeat:Infinity }}
+              />
+              {/* Right strand dot */}
+              <motion.div
+                className="absolute rounded-full"
+                style={{
+                  width:     6, height:6,
+                  left:      x2-3, top:-3,
+                  background: col2,
+                  boxShadow:  `0 0 8px ${col2}`,
+                }}
+                animate={{ scale:[1,1.3,1] }}
+                transition={{ duration:1, delay:i*0.05+0.5, repeat:Infinity }}
+              />
+              {/* Connection */}
+              <div
+                className="absolute"
+                style={{
+                  width:     Math.abs(x1-x2),
+                  height:    1,
+                  left:      Math.min(x1,x2),
+                  top:       -0.5,
+                  background:`linear-gradient(90deg,${col2},${col1})`,
+                  opacity:   0.4,
+                }}
+              />
+            </div>
+          );
+        })}
+
+        {/* Central time portal */}
+        <div className="relative z-10 flex items-center justify-center">
+          {/* Core pulse rings */}
+          {[100,75,52,32,16].map((size,i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width:     size, height:size,
+                border:    `${i<2?2:1}px solid rgba(99,102,241,${0.5-i*0.08})`,
+                boxShadow: `0 0 ${20-i*3}px rgba(99,102,241,${0.15-i*0.02})`,
+              }}
+              animate={{scale:[1,1.15,1],opacity:[0.8,0.3,0.8]}}
+              transition={{duration:2.5+i*0.4,repeat:Infinity,delay:i*0.25}}
+            />
+          ))}
+
+          {/* Core */}
+          <motion.div
+            className="relative z-10 rounded-2xl flex flex-col items-center justify-center"
+            style={{
+              width:      65, height:65,
+              background: "radial-gradient(circle at 35% 35%, rgba(99,102,241,0.35), rgba(0,0,8,0.95))",
+              border:     "1px solid rgba(99,102,241,0.5)",
+              boxShadow:  "0 0 40px rgba(99,102,241,0.4), 0 0 80px rgba(168,85,247,0.2)",
+            }}
+            animate={{
+              boxShadow:[
+                "0 0 40px rgba(99,102,241,0.4), 0 0 80px rgba(168,85,247,0.2)",
+                "0 0 80px rgba(99,102,241,0.7), 0 0 160px rgba(168,85,247,0.4)",
+                "0 0 40px rgba(99,102,241,0.4), 0 0 80px rgba(168,85,247,0.2)",
+              ],
+            }}
+            transition={{duration:3,repeat:Infinity}}
+          >
+            <span className="font-hebrew text-2xl font-black"
+                  style={{color:"#6366f1",textShadow:"0 0 15px rgba(99,102,241,0.9)"}}>
+              עֵת
+            </span>
+            <span className="text-[8px] font-mono text-white/30">TIME</span>
+          </motion.div>
+        </div>
+
+        {/* Active era label */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentLayer}
+            initial={{opacity:0,y:10}}
+            animate={{opacity:1,y:0}}
+            exit={{opacity:0,y:-10}}
+            className="absolute glass rounded-2xl px-4 py-2 text-center"
+            style={{
+              bottom:      "15%",
+              borderColor: `${TIME_LAYERS[currentLayer%TIME_LAYERS.length].color}30`,
+            }}
+          >
+            <div className="text-xl">{TIME_LAYERS[currentLayer%TIME_LAYERS.length].emoji}</div>
+            <div className="text-[10px] font-mono font-bold"
+                 style={{color:TIME_LAYERS[currentLayer%TIME_LAYERS.length].color}}>
+              {TIME_LAYERS[currentLayer%TIME_LAYERS.length].era}
+            </div>
+            <div className="text-[8px] text-white/30">
+              {TIME_LAYERS[currentLayer%TIME_LAYERS.length].years}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Data rain */}
+      {Array.from({length:25},(_,i) => (
+        <motion.div key={i}
+          className="absolute font-mono text-[9px] pointer-events-none"
+          style={{
+            left:`${Math.random()*100}%`,
+            color:["#6366f1","#a855f7","#fbbf24","#06b6d4","#f0abfc"][i%5],
+            opacity:0.2,
+          }}
+          animate={{y:["-5vh","105vh"],opacity:[0,0.35,0]}}
+          transition={{duration:4+Math.random()*5,delay:Math.random()*8,repeat:Infinity,ease:"linear"}}
+        >
+          {["DNA","528Hz","עֵת","TIME","∞","ψ","PAST","FUTURE","NOW","QUANTUM"][i%10]}
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Pricing card ────────────────────────────────────────── */
+function PricingCard({
+  tier, isYearly, index,
+}: {
+  tier: typeof PRICING[0]; isYearly:boolean; index:number;
+}) {
+  const price = isYearly && tier.yearly > 0
+    ? Math.floor(tier.yearly/12) : tier.price;
+  return (
+    <motion.div
+      initial={{opacity:0,y:40}}
+      whileInView={{opacity:1,y:0}}
+      viewport={{once:true}}
+      transition={{delay:index*0.1}}
+      whileHover={{scale:1.02,y:-6}}
+      className="relative rounded-2xl overflow-hidden"
+      style={{
+        background:"rgba(0,0,8,0.85)",
+        backdropFilter:"blur(20px)",
+        border:tier.featured?`1px solid ${tier.color}50`:`1px solid ${tier.color}18`,
+        boxShadow:tier.featured?`0 0 60px ${tier.color}18`:"none",
+      }}
+    >
+      <div className="absolute top-0 left-0 right-0 h-0.5"
+           style={{background:tier.color}} />
+      {tier.featured && (
+        <>
+          <div className="absolute top-4 right-4 text-[9px] font-mono font-bold px-2 py-1 rounded"
+               style={{background:`${tier.color}20`,color:tier.color,border:`1px solid ${tier.color}40`}}>
+            MOST POPULAR
+          </div>
+          <div className="absolute inset-0 pointer-events-none"
+               style={{background:`radial-gradient(ellipse at top,${tier.color}05,transparent 60%)`}} />
+        </>
+      )}
+      <div className="p-7">
+        <div className="font-hebrew text-2xl font-bold mb-2 mt-1"
+             style={{color:`${tier.color}65`}}>
+          {tier.hebrew}
+        </div>
+        <div className="font-bold text-white text-xl mb-1">{tier.name}</div>
+        <p className="text-xs text-white/30 italic mb-5">{tier.desc}</p>
+        <div className="mb-4">
+          <span className="text-5xl font-bold font-mono"
+                style={{color:tier.featured?tier.color:"white"}}>
+            ${price}
+          </span>
+          {price>0 && <span className="text-sm text-white/30 ml-1">/mo</span>}
+        </div>
+        {isYearly && tier.yearly>0 && (
+          <div className="text-xs font-mono mb-5" style={{color:`${tier.color}65`}}>
+            ${tier.yearly}/yr — 2 months free
+          </div>
+        )}
+        <div className="space-y-2 mb-6">
+          {tier.features.map((f,i) => (
+            <div key={i} className="flex items-start gap-2 text-sm">
+              <Check size={13} className="flex-shrink-0 mt-0.5" style={{color:tier.color}} />
+              <span style={{color:"rgba(226,232,240,0.55)"}}>{f}</span>
+            </div>
+          ))}
+        </div>
+        <Link href="/sign-up">
+          <button
+            className="w-full py-3.5 rounded-xl font-bold text-sm transition-all hover:scale-105"
+            style={
+              tier.featured
+                ? {background:`linear-gradient(135deg,${tier.color},#6366f1)`,color:"white",boxShadow:`0 0 20px ${tier.color}40`}
+                : {background:`${tier.color}10`,border:`1px solid ${tier.color}30`,color:tier.color}
+            }
+          >{tier.cta}</button>
+        </Link>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════ */
+/*  MAIN PAGE                                                  */
+/* ══════════════════════════════════════════════════════════ */
+export default function ETLanding() {
+  const [isYearly,    setIsYearly]    = useState(false);
+  const [showTones,   setShowTones]   = useState(false);
+  const [activeProto, setActiveProto] = useState<number|null>(null);
+  const [activeLayer, setActiveLayer] = useState(0);
+  const [playing,     setPlaying]     = useState<Set<number>>(new Set());
+
+  const ctxRef    = useRef<AudioContext|null>(null);
+  const masterRef = useRef<GainNode|null>(null);
+  const oscsRef   = useRef<Map<number,{oscs:OscillatorNode[];gain:GainNode}>>(new Map());
+
+  const heroRef     = useRef<HTMLDivElement>(null);
+  const {scrollY}   = useScroll();
+  const heroOpacity = useTransform(scrollY,[0,700],[1,0]);
+  const heroScale   = useTransform(scrollY,[0,700],[1,0.88]);
+
+  useEffect(() => {
+    const iv = setInterval(
+      () => setActiveLayer(p => (p+1)%TIME_LAYERS.length), 2200
+    );
+    return () => clearInterval(iv);
+  }, []);
+
+  const initAudio = useCallback(() => {
+    if (ctxRef.current) return;
+    const ctx    = new AudioContext({sampleRate:48000});
+    const master = ctx.createGain();
+    master.gain.value = 0.6;
+    master.connect(ctx.destination);
+    ctxRef.current  = ctx;
+    masterRef.current = master;
+  }, []);
+
+  const playHz = useCallback((hz: number) => {
+    initAudio();
+    const ctx    = ctxRef.current!;
+    const master = masterRef.current!;
+
+    if (oscsRef.current.has(hz)) {
+      const e = oscsRef.current.get(hz)!;
+      e.gain.gain.linearRampToValueAtTime(0, ctx.currentTime+0.3);
+      setTimeout(() => {
+        e.oscs.forEach(o => {try{o.stop();o.disconnect();}catch{}});
+        e.gain.disconnect();
+      }, 350);
+      oscsRef.current.delete(hz);
+      setPlaying(prev => {const n=new Set(prev);n.delete(hz);return n;});
+      return;
+    }
+
+    const gain   = ctx.createGain();
+    gain.gain.value = 0;
+    gain.connect(master);
+    const merger = ctx.createChannelMerger(2);
+    merger.connect(gain);
+    const oscL   = ctx.createOscillator();
+    const oscR   = ctx.createOscillator();
+    const gL     = ctx.createGain();
+    const gR     = ctx.createGain();
+    oscL.type = oscR.type = "sine";
+    oscL.frequency.value = hz < 20 ? 200 : hz;
+    oscR.frequency.value = hz < 20 ? 200 + hz*2 : hz + 40;
+    gL.gain.value = gR.gain.value = 0.5;
+    oscL.connect(gL); gL.connect(merger,0,0);
+    oscR.connect(gR); gR.connect(merger,0,1);
+    oscL.start(); oscR.start();
+    gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime+0.8);
+    oscsRef.current.set(hz, {oscs:[oscL,oscR],gain});
+    setPlaying(prev => new Set(prev).add(hz));
+  }, [initAudio]);
+
+  const stopAll = useCallback(() => {
+    const ctx = ctxRef.current;
+    if (!ctx) return;
+    oscsRef.current.forEach(e => {
+      e.gain.gain.linearRampToValueAtTime(0, ctx.currentTime+0.3);
+      setTimeout(() => {
+        e.oscs.forEach(o=>{try{o.stop();o.disconnect();}catch{}});
+        e.gain.disconnect();
+      }, 350);
+    });
+    oscsRef.current.clear();
+    setPlaying(new Set());
+  }, []);
+
+  const playProtocol = useCallback((freqs: number[]) => {
+    stopAll();
+    freqs.forEach((hz,i) => setTimeout(() => playHz(hz), i*400));
+  }, [stopAll, playHz]);
+
+  useEffect(() => () => {stopAll();}, []);
+
+  return (
+    <main className="relative min-h-screen overflow-hidden"
+          style={{background:"#000008"}}>
+
+      {/* Background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div style={{
+          position:"absolute",inset:0,
+          background:"radial-gradient(ellipse at 50% 0%, #080020 0%, #000008 55%, #0a0008 100%)",
+        }} />
+        <div className="absolute inset-0" style={{
+          backgroundImage:
+            "linear-gradient(rgba(99,102,241,0.02) 1px, transparent 1px)," +
+            "linear-gradient(90deg, rgba(168,85,247,0.02) 1px, transparent 1px)",
+          backgroundSize:"55px 55px",
+        }} />
+      </div>
+
+      {/* Navbar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 h-16
+                      flex items-center justify-between px-6"
+           style={{
+             background:"rgba(0,0,8,0.92)",
+             backdropFilter:"blur(40px)",
+             borderBottom:"1px solid rgba(99,102,241,0.12)",
+           }}>
+        <Link href="/" className="flex items-center gap-3">
+          <motion.div
+            className="w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{background:"linear-gradient(135deg,#6366f1,#a855f7,#fbbf24)"}}
+            whileHover={{scale:1.1,rotate:8}}
+            animate={{
+              boxShadow:[
+                "0 0 12px rgba(99,102,241,0.5)",
+                "0 0 30px rgba(168,85,247,0.8)",
+                "0 0 12px rgba(99,102,241,0.5)",
+              ],
+            }}
+            transition={{duration:2.5,repeat:Infinity}}
+          >
+            <span className="font-hebrew text-white font-black text-lg">ע</span>
+          </motion.div>
+          <div>
+            <div className="font-bold text-white text-lg tracking-wide">ET — עֵת</div>
+            <div className="text-[9px] font-hebrew"
+                 style={{color:"rgba(99,102,241,0.5)"}}>
+              עֵת · TIME DNA PLATFORM · זְמַן
+            </div>
+          </div>
+        </Link>
+
+        <div className="hidden md:flex items-center gap-1">
+          {[
+            {label:"Time Layers",  href:"/#layers"   },
+            {label:"The Science",  href:"/#science"  },
+            {label:"Protocols",    href:"/#protocols" },
+            {label:"Who Needs",    href:"/#buyers"    },
+            {label:"Pricing",      href:"/#pricing"   },
+          ].map(item => (
+            <Link key={item.href} href={item.href}
+                  className="px-4 py-2 text-sm rounded-lg transition-all"
+                  style={{color:"rgba(226,232,240,0.4)"}}>
+              {item.label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <motion.button
+            onClick={() => setShowTones(!showTones)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold"
+            style={{
+              background:showTones?"rgba(168,85,247,0.15)":"rgba(99,102,241,0.12)",
+              border:`1px solid ${showTones?"rgba(168,85,247,0.4)":"rgba(99,102,241,0.25)"}`,
+              color:showTones?"#a855f7":"#6366f1",
+            }}
+            whileHover={{scale:1.04}}
+          >
+            <Volume2 size={14} />
+            {showTones?"Hide":"Play"} Time Tones
+          </motion.button>
+          <Link href="/sign-up">
+            <motion.button
+              className="px-6 py-2 rounded-lg text-sm font-bold text-white"
+              style={{
+                background:"linear-gradient(135deg,#6366f1,#a855f7)",
+                boxShadow:"0 0 20px rgba(99,102,241,0.4)",
+              }}
+              whileHover={{scale:1.04}}
+              whileTap={{scale:0.97}}
+            >
+              Begin Journey
+            </motion.button>
+          </Link>
+        </div>
+      </nav>
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* HERO                                             */}
+      {/* ════════════════════════════════════════════════ */}
+      <section ref={heroRef}
+               className="relative min-h-screen flex items-center
+                          justify-center pt-20">
+        <TimeVortexScene />
+
+        <motion.div
+          style={{opacity:heroOpacity,scale:heroScale}}
+          className="relative z-10 text-center px-4 max-w-5xl mx-auto"
+        >
+          {/* Badge */}
+          <motion.div
+            initial={{opacity:0,y:-20}}
+            animate={{opacity:1,y:0}}
+            transition={{duration:0.7}}
+            className="flex justify-center mb-6"
+          >
+            <div className="flex items-center gap-2 px-8 py-2.5 rounded-full
+                            text-sm font-mono tracking-[0.2em] uppercase"
+                 style={{
+                   background:"rgba(99,102,241,0.08)",
+                   border:"1px solid rgba(99,102,241,0.2)",
+                   color:"#6366f1",
+                 }}>
+              <Sparkles size={12} />
+              Quantum DNA · Ancestral Memory · Time Navigation
+              <Sparkles size={12} />
+            </div>
+          </motion.div>
+
+          {/* Hebrew */}
+          <motion.div
+            initial={{opacity:0,scale:0.6}}
+            animate={{opacity:1,scale:1}}
+            transition={{duration:1,delay:0.1,type:"spring"}}
+            className="mb-3"
+          >
+            <h1 className="font-hebrew font-black leading-none"
+                style={{
+                  fontSize:"clamp(100px,18vw,220px)",
+                  background:"linear-gradient(135deg,#6366f1 0%,#ffffff 35%,#a855f7 60%,#fbbf24 100%)",
+                  WebkitBackgroundClip:"text",
+                  WebkitTextFillColor:"transparent",
+                  filter:"drop-shadow(0 0 60px rgba(99,102,241,0.4))",
+                }}>
+              עֵת
+            </h1>
+          </motion.div>
+
+          {/* Brand */}
+          <motion.h2
+            initial={{opacity:0,y:20}}
+            animate={{opacity:1,y:0}}
+            transition={{duration:0.8,delay:0.3}}
+            className="font-bold text-white tracking-[0.15em] uppercase mb-4"
+            style={{fontSize:"clamp(24px,5vw,64px)"}}
+          >
+            ET — TIME DNA PLATFORM
+          </motion.h2>
+
+          {/* Tagline */}
+          <motion.p
+            initial={{opacity:0}}
+            animate={{opacity:1}}
+            transition={{delay:0.5}}
+            className="text-lg md:text-2xl mb-3 tracking-[0.1em] uppercase"
+            style={{color:"rgba(226,232,240,0.45)",fontWeight:300}}
+          >
+            Your DNA Remembers Every Time You Have Ever Been
+          </motion.p>
+
+          <motion.p
+            initial={{opacity:0}}
+            animate={{opacity:1}}
+            transition={{delay:0.7}}
+            className="text-sm md:text-base mb-10 max-w-2xl mx-auto leading-relaxed"
+            style={{color:"rgba(226,232,240,0.35)"}}
+          >
+            Your DNA contains quantum records of every ancestor who ever lived.
+            Every time. Every experience. Every piece of wisdom.
+            Specific frequencies unlock specific time layers.
+            The science is confirmed. The access is now possible.
+          </motion.p>
+
+          {/* Active layer display */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeLayer}
+              initial={{opacity:0,y:8}}
+              animate={{opacity:1,y:0}}
+              exit={{opacity:0,y:-8}}
+              className="flex justify-center mb-10"
+            >
+              <div className="px-6 py-3 rounded-2xl flex items-center gap-4"
+                   style={{
+                     background:`${TIME_LAYERS[activeLayer].color}08`,
+                     border:`1px solid ${TIME_LAYERS[activeLayer].color}25`,
+                   }}>
+                <span className="text-2xl">{TIME_LAYERS[activeLayer].emoji}</span>
+                <div className="text-left">
+                  <div className="font-bold text-white">{TIME_LAYERS[activeLayer].era}</div>
+                  <div className="text-xs" style={{color:"rgba(226,232,240,0.4)"}}>
+                    {TIME_LAYERS[activeLayer].years}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-mono font-black text-xl"
+                       style={{color:TIME_LAYERS[activeLayer].color}}>
+                    {TIME_LAYERS[activeLayer].freq}Hz
+                  </div>
+                  <div className="text-[9px] font-mono text-white/25">ACCESS KEY</div>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* CTAs */}
+          <motion.div
+            initial={{opacity:0,y:30}}
+            animate={{opacity:1,y:0}}
+            transition={{delay:0.8}}
+            className="flex flex-col sm:flex-row gap-4 justify-center mb-14"
+          >
+            <Link href="/sign-up">
+              <motion.button
+                className="flex items-center gap-3 text-lg px-14 py-5
+                           rounded-xl font-bold text-white"
+                style={{
+                  background:"linear-gradient(135deg,#6366f1,#a855f7,#fbbf24)",
+                  backgroundSize:"200%",
+                  boxShadow:"0 0 35px rgba(99,102,241,0.5)",
+                }}
+                whileHover={{scale:1.03}}
+                whileTap={{scale:0.97}}
+              >
+                <Clock size={22} />
+                Begin Time Navigation
+                <ArrowRight size={20} />
+              </motion.button>
+            </Link>
+            <motion.button
+              onClick={() => setShowTones(!showTones)}
+              className="flex items-center gap-2 text-lg px-14 py-5
+                         rounded-xl font-semibold transition-all"
+              style={{
+                background:"rgba(99,102,241,0.08)",
+                border:"1px solid rgba(99,102,241,0.25)",
+                color:"#6366f1",
+              }}
+              whileHover={{borderColor:"rgba(99,102,241,0.5)",scale:1.02}}
+            >
+              <Volume2 size={20} />
+              {showTones?"Hide":"Open"} Time Frequencies
+            </motion.button>
+          </motion.div>
+
+          {/* Stats */}
+          <motion.div
+            initial={{opacity:0}}
+            animate={{opacity:1}}
+            transition={{delay:1}}
+            className="flex flex-wrap justify-center gap-8 md:gap-14"
+          >
+            {[
+              {v:"8",      l:"DNA Time Layers",        c:"#6366f1"},
+              {v:"528Hz",  l:"DNA Repair Key",         c:"#fbbf24"},
+              {v:"963Hz",  l:"Pineal Time Gateway",    c:"#f0abfc"},
+              {v:"∞",      l:"Ancestral Records",      c:"#a855f7"},
+              {v:"PROVEN", l:"Quantum Biology",        c:"#22c55e"},
+            ].map((s,i) => (
+              <div key={i} className="text-center">
+                <div className="text-2xl md:text-3xl font-bold font-mono"
+                     style={{color:s.c,textShadow:`0 0 20px ${s.c}60`}}>
+                  {s.v}
+                </div>
+                <div className="text-xs mt-1 tracking-wider uppercase"
+                     style={{color:"rgba(226,232,240,0.28)"}}>
+                  {s.l}
+                </div>
+              </div>
+            ))}
+          </motion.div>
+        </motion.div>
+
+        <motion.div
+          animate={{y:[0,12,0]}}
+          transition={{repeat:Infinity,duration:2.5}}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20
+                     flex flex-col items-center gap-2"
+          style={{color:"rgba(99,102,241,0.3)"}}
+        >
+          <span className="text-xs tracking-[0.4em] uppercase font-mono">
+            Navigate Time
+          </span>
+          <ChevronDown size={20} />
+        </motion.div>
+      </section>
+
+      {/* Tone engine */}
+      <AnimatePresence>
+        {showTones && (
+          <motion.section
+            initial={{opacity:0,height:0}}
+            animate={{opacity:1,height:"auto"}}
+            exit={{opacity:0,height:0}}
+            className="relative py-12 px-4"
+          >
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-6">
+                <h2 className="font-bold text-white text-2xl mb-2">
+                  Time{" "}
+                  <span style={{color:"#6366f1"}}>Frequency Engine</span>
+                </h2>
+                <p style={{color:"rgba(226,232,240,0.35)"}} className="text-sm">
+                  Each frequency unlocks a specific time layer in your DNA.
+                  Use headphones for full effect.
+                </p>
+              </div>
+              <MoachToneEngine />
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* TIME LAYERS                                       */}
+      {/* ════════════════════════════════════════════════ */}
+      <section className="relative py-24 px-4" id="layers">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{opacity:0,y:40}}
+            whileInView={{opacity:1,y:0}}
+            viewport={{once:true}}
+            className="text-center mb-14"
+          >
+            <div className="font-hebrew text-5xl font-black mb-3"
+                 style={{color:"#6366f1",textShadow:"0 0 20px rgba(99,102,241,0.4)"}}>
+              שִׁכְבוֹת הַזְּמַן
+            </div>
+            <h2 className="font-bold text-white mb-4"
+                style={{fontSize:"clamp(24px,4vw,48px)"}}>
+              Eight Time Layers in Your DNA
+            </h2>
+            <p style={{color:"rgba(226,232,240,0.38)"}}>
+              Every layer accessible through a specific frequency.
+              Click any layer to play its access key.
+            </p>
+          </motion.div>
+
+          <div className="space-y-3">
+            {TIME_LAYERS.map((layer,i) => {
+              const isPlaying = playing.has(layer.freq);
+              return (
+                <motion.div
+                  key={i}
+                  initial={{opacity:0,x:-20}}
+                  whileInView={{opacity:1,x:0}}
+                  viewport={{once:true}}
+                  transition={{delay:i*0.08}}
+                  whileHover={{scale:1.01,x:4}}
+                  className="flex items-center gap-4 rounded-2xl p-4 cursor-pointer
+                             transition-all duration-200"
+                  style={{
+                    background:"rgba(0,0,8,0.82)",
+                    backdropFilter:"blur(20px)",
+                    border:`1px solid ${layer.color}${isPlaying?"40":"15"}`,
+                    boxShadow:isPlaying?`0 0 20px ${layer.color}15`:"none",
+                  }}
+                  onClick={() => playHz(layer.freq)}
+                >
+                  {/* Era number */}
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center
+                                  flex-shrink-0 font-mono font-bold text-sm"
+                       style={{background:`${layer.color}12`,color:layer.color}}>
+                    {8-i}
+                  </div>
+
+                  {/* Emoji */}
+                  <span className="text-2xl flex-shrink-0">{layer.emoji}</span>
+
+                  {/* Era info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3">
+                      <div className="font-bold text-white">{layer.era}</div>
+                      <div className="text-[9px] font-mono px-2 py-0.5 rounded"
+                           style={{background:`${layer.color}12`,color:`${layer.color}80`}}>
+                        {layer.years}
+                      </div>
+                    </div>
+                    <div className="text-xs mt-0.5"
+                         style={{color:"rgba(226,232,240,0.45)"}}>
+                      {layer.desc}
+                    </div>
+                  </div>
+
+                  {/* Access key */}
+                  <div className="text-right flex-shrink-0">
+                    <div className="font-mono font-black text-xl"
+                         style={{
+                           color:layer.color,
+                           textShadow:isPlaying?`0 0 10px ${layer.color}`:"none",
+                         }}>
+                      {layer.freq}Hz
+                    </div>
+                    <div className="text-[9px] font-mono text-white/25">ACCESS KEY</div>
+                  </div>
+
+                  {/* Play indicator */}
+                  <motion.div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center
+                               flex-shrink-0"
+                    style={{
+                      background:`${layer.color}${isPlaying?"20":"08"}`,
+                      border:`1px solid ${layer.color}${isPlaying?"40":"15"}`,
+                      color:layer.color,
+                    }}
+                  >
+                    {isPlaying
+                      ? <motion.div
+                          className="w-2 h-2 rounded-sm"
+                          style={{background:layer.color}}
+                          animate={{scale:[1,0.7,1]}}
+                          transition={{duration:0.5,repeat:Infinity}}
+                        />
+                      : <Play size={13} />}
+                  </motion.div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Stop all */}
+          {playing.size > 0 && (
+            <motion.div
+              initial={{opacity:0}}
+              animate={{opacity:1}}
+              className="mt-4 flex justify-center"
+            >
+              <button
+                onClick={stopAll}
+                className="px-6 py-2.5 rounded-xl font-bold text-sm"
+                style={{
+                  background:"rgba(239,68,68,0.1)",
+                  border:"1px solid rgba(239,68,68,0.25)",
+                  color:"#ef4444",
+                }}
+              >
+                ■ Stop All Time Frequencies
+              </button>
+            </motion.div>
+          )}
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* SCIENCE                                           */}
+      {/* ════════════════════════════════════════════════ */}
+      <section className="relative py-24 px-4" id="science">
+        <div className="max_w-6xl mx-auto max-w-6xl">
+          <motion.div
+            initial={{opacity:0,y:40}}
+            whileInView={{opacity:1,y:0}}
+            viewport={{once:true}}
+            className="text-center mb-14"
+          >
+            <h2 className="font-bold text-white mb-4"
+                style={{fontSize:"clamp(24px,4vw,48px)"}}>
+              The Science Behind{" "}
+              <span style={{color:"#6366f1",textShadow:"0 0 20px rgba(99,102,241,0.5)"}}>
+                DNA Time Access
+              </span>
+            </h2>
+            <p style={{color:"rgba(226,232,240,0.38)"}}>
+              Not metaphysics. Quantum biology.
+              Published research. Confirmed mechanisms.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {DNA_SCIENCE.map((s,i) => (
+              <motion.div
+                key={i}
+                initial={{opacity:0,y:20}}
+                whileInView={{opacity:1,y:0}}
+                viewport={{once:true}}
+                transition={{delay:i*0.08}}
+                whileHover={{scale:1.02,y:-4}}
+                className="relative rounded-2xl p-5 overflow-hidden"
+                style={{
+                  background:"rgba(0,0,8,0.82)",
+                  backdropFilter:"blur(20px)",
+                  border:`1px solid ${s.color}18`,
+                }}
+              >
+                <div className="absolute top-0 left-0 right-0 h-px"
+                     style={{background:`linear-gradient(90deg,transparent,${s.color},transparent)`}} />
+
+                <div className="flex items-start justify-between mb-3">
+                  <span className="text-2xl">{s.emoji}</span>
+                  <div className="text-[9px] font-mono px-2 py-0.5 rounded"
+                       style={{
+                         background:s.confirmed?"rgba(34,197,94,0.1)":"rgba(245,158,11,0.1)",
+                         color:s.confirmed?"#22c55e":"#f59e0b",
+                         border:`1px solid ${s.confirmed?"rgba(34,197,94,0.2)":"rgba(245,158,11,0.2)"}`,
+                       }}>
+                    {s.confirmed?"✓ CONFIRMED":"⚠ RESEARCH"}
+                  </div>
+                </div>
+
+                <div className="font-bold text-white mb-1">{s.title}</div>
+                <div className="text-[10px] font-mono mb-3"
+                     style={{color:`${s.color}65`}}>
+                  {s.org}
+                </div>
+                <p className="text-xs leading-relaxed"
+                   style={{color:"rgba(226,232,240,0.5)"}}>
+                  {s.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* PROTOCOLS                                         */}
+      {/* ════════════════════════════════════════════════ */}
+      <section className="relative py-24 px-4" id="protocols">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{opacity:0,y:40}}
+            whileInView={{opacity:1,y:0}}
+            viewport={{once:true}}
+            className="text-center mb-14"
+          >
+            <h2 className="font-bold text-white mb-4"
+                style={{fontSize:"clamp(24px,4vw,48px)"}}>
+              Time Navigation{" "}
+              <span style={{color:"#a855f7"}}>Protocols</span>
+            </h2>
+            <p style={{color:"rgba(226,232,240,0.38)"}}>
+              Step-by-step frequency sequences for each time destination.
+            </p>
+          </motion.div>
+
+          <div className="space-y-4">
+            {TIME_PROTOCOLS.map((proto,i) => {
+              const isActive  = activeProto === i;
+              const allPlay   = proto.freqs.every(hz => playing.has(hz));
+
+              return (
+                <motion.div
+                  key={i}
+                  initial={{opacity:0,y:20}}
+                  whileInView={{opacity:1,y:0}}
+                  viewport={{once:true}}
+                  transition={{delay:i*0.08}}
+                  className="rounded-2xl overflow-hidden"
+                  style={{
+                    background:"rgba(0,0,8,0.88)",
+                    backdropFilter:"blur(20px)",
+                    border:isActive?`1px solid ${proto.color}45`:`1px solid ${proto.color}18`,
+                    boxShadow:isActive?`0 0 25px ${proto.color}15`:"none",
+                  }}
+                >
+                  <div
+                    className="flex items-start justify-between p-5 cursor-pointer"
+                    onClick={() => setActiveProto(isActive?null:i)}
+                  >
+                    <div>
+                      <div className="font-bold text-white text-xl mb-0.5">{proto.name}</div>
+                      <div className="font-hebrew text-sm mb-2"
+                           style={{color:`${proto.color}65`}}>
+                        {proto.hebrew}
+                      </div>
+                      <p className="text-sm max-w-2xl"
+                         style={{color:"rgba(226,232,240,0.55)"}}>
+                        {proto.access}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 ml-4 flex-shrink-0">
+                      <div className="text-xs font-mono px-3 py-1.5 rounded-xl"
+                           style={{background:`${proto.color}12`,color:proto.color,border:`1px solid ${proto.color}25`}}>
+                        {proto.time}
+                      </div>
+                      <div className="flex flex-wrap gap-1 justify-end">
+                        {proto.freqs.map(hz => (
+                          <span key={hz}
+                                className="text-[9px] font-mono px-1.5 py-0.5 rounded"
+                                style={{
+                                  background:playing.has(hz)?`${proto.color}20`:"rgba(255,255,255,0.04)",
+                                  color:playing.has(hz)?proto.color:"rgba(226,232,240,0.3)",
+                                }}>
+                            {hz}Hz
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <AnimatePresence>
+                    {isActive && (
+                      <motion.div
+                        initial={{height:0,opacity:0}}
+                        animate={{height:"auto",opacity:1}}
+                        exit={{height:0,opacity:0}}
+                        className="px-5 pb-5 space-y-4"
+                      >
+                        <div className="border-t" style={{borderColor:`${proto.color}12`}} />
+
+                        {/* Steps */}
+                        <div className="space-y-2">
+                          {proto.steps.map((step,si) => (
+                            <div key={si}
+                                 className="flex items-center gap-4 p-3 rounded-xl"
+                                 style={{
+                                   background:"rgba(255,255,255,0.02)",
+                                   border:"1px solid rgba(255,255,255,0.05)",
+                                 }}>
+                              <div className="flex-shrink-0 text-center w-16">
+                                <div className="font-mono font-black text-base"
+                                     style={{color:proto.color}}>
+                                  {step.freq}
+                                </div>
+                              </div>
+                              <div className="flex-1 text-xs"
+                                   style={{color:"rgba(226,232,240,0.6)"}}>
+                                {step.why}
+                              </div>
+                              <button
+                                onClick={() => playHz(parseFloat(step.freq))}
+                                className="w-8 h-8 rounded-xl flex items-center
+                                           justify-center flex-shrink-0"
+                                style={{
+                                  background:`${proto.color}12`,
+                                  color:proto.color,
+                                  border:`1px solid ${proto.color}25`,
+                                }}
+                              >
+                                {playing.has(parseFloat(step.freq))
+                                  ? <Square size={11} />
+                                  : <Play   size={11} />}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Warning */}
+                        {proto.warning && (
+                          <div className="rounded-xl p-3 flex items-start gap-2"
+                               style={{
+                                 background:"rgba(239,68,68,0.06)",
+                                 border:"1px solid rgba(239,68,68,0.15)",
+                               }}>
+                            <AlertCircle size={14} style={{color:"#ef4444",flexShrink:0}} />
+                            <span className="text-xs" style={{color:"rgba(239,68,68,0.8)"}}>
+                              {proto.warning}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Play button */}
+                        <motion.button
+                          onClick={() => {
+                            if (allPlay) stopAll();
+                            else playProtocol(proto.freqs);
+                          }}
+                          className="w-full py-4 rounded-2xl font-bold text-lg text-white"
+                          style={{
+                            background:allPlay
+                              ?"rgba(239,68,68,0.15)"
+                              :`linear-gradient(135deg,${proto.color},#6366f1)`,
+                            border:allPlay?"1px solid rgba(239,68,68,0.3)":"none",
+                            color:allPlay?"#ef4444":"white",
+                            boxShadow:allPlay?"none":`0 0 25px ${proto.color}30`,
+                          }}
+                          whileHover={{scale:1.01}}
+                        >
+                          {allPlay?`■ Stop ${proto.name}`:`▶ Begin ${proto.name}`}
+                        </motion.button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* WHO NEEDS                                         */}
+      {/* ════════════════════════════════════════════════ */}
+      <section className="relative py-24 px-4" id="buyers">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{opacity:0,y:40}}
+            whileInView={{opacity:1,y:0}}
+            viewport={{once:true}}
+            className="text-center mb-14"
+          >
+            <h2 className="font-bold text-white mb-4"
+                style={{fontSize:"clamp(24px,4vw,48px)"}}>
+              Who Needs{" "}
+              <span style={{color:"#6366f1"}}>ET</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {WHO_NEEDS.map((b,i) => (
+              <motion.div
+                key={i}
+                initial={{opacity:0,y:20}}
+                whileInView={{opacity:1,y:0}}
+                viewport={{once:true}}
+                transition={{delay:i*0.08}}
+                whileHover={{scale:1.02,y:-4}}
+                className="relative rounded-2xl p-5 overflow-hidden"
+                style={{
+                  background:"rgba(0,0,8,0.82)",
+                  backdropFilter:"blur(20px)",
+                  border:`1px solid ${b.color}15`,
+                }}
+              >
+                <div className="text-3xl mb-3">{b.emoji}</div>
+                <div className="font-bold text-white mb-1">{b.who}</div>
+                <div className="font-mono font-bold text-xs mb-3"
+                     style={{color:b.color}}>
+                  {b.pays}
+                </div>
+                <p className="text-xs leading-relaxed"
+                   style={{color:"rgba(226,232,240,0.48)"}}>
+                  {b.why}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* PRICING                                           */}
+      {/* ════════════════════════════════════════════════ */}
+      <section className="relative py-24 px-4" id="pricing">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{opacity:0,y:40}}
+            whileInView={{opacity:1,y:0}}
+            viewport={{once:true}}
+            className="text-center mb-14"
+          >
+            <h2 className="font-bold text-white mb-4"
+                style={{fontSize:"clamp(26px,5vw,52px)"}}>
+              Choose Your{" "}
+              <span style={{color:"#6366f1"}}>Time Access Level</span>
+            </h2>
+            <p style={{color:"rgba(226,232,240,0.35)"}} className="text-lg mb-10">
+              Your ancestors encoded everything they knew into your DNA.
+              ET gives you the keys to access it.
+            </p>
+
+            <div className="flex items-center justify-center gap-4">
+              <span className="text-sm font-medium"
+                    style={{color:!isYearly?"white":"rgba(226,232,240,0.3)"}}>
+                Monthly
+              </span>
+              <button
+                onClick={() => setIsYearly(!isYearly)}
+                className="relative w-16 h-8 rounded-full transition-all"
+                style={{
+                  background:isYearly?"#6366f1":"rgba(99,102,241,0.1)",
+                  border:"1px solid rgba(99,102,241,0.3)",
+                }}
+              >
+                <motion.div
+                  animate={{x:isYearly?32:4}}
+                  transition={{type:"spring",stiffness:400}}
+                  className="absolute top-1 w-6 h-6 rounded-full bg-white shadow-lg"
+                />
+              </button>
+              <span className="text-sm font-medium"
+                    style={{color:isYearly?"white":"rgba(226,232,240,0.3)"}}>
+                Yearly
+                <span className="ml-2 text-xs px-2 py-0.5 rounded font-mono"
+                      style={{background:"rgba(99,102,241,0.12)",color:"#6366f1"}}>
+                  Save 17%
+                </span>
+              </span>
+            </div>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {PRICING.map((tier,i) => (
+              <PricingCard key={tier.name} tier={tier} isYearly={isYearly} index={i} />
+            ))}
+          </div>
+
+          <p className="text-center text-sm mt-10"
+             style={{color:"rgba(226,232,240,0.2)"}}>
+            14-day free trial. No credit card required.
+            Results experienced within first session.
+          </p>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* FINAL CTA                                        */}
+      {/* ════════════════════════════════════════════════ */}
+      <section className="relative py-24 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div
+            initial={{opacity:0,scale:0.92}}
+            whileInView={{opacity:1,scale:1}}
+            viewport={{once:true}}
+            className="relative rounded-3xl p-16 overflow-hidden"
+            style={{
+              background:"rgba(0,0,8,0.9)",
+              backdropFilter:"blur(40px)",
+              border:"1px solid rgba(99,102,241,0.2)",
+              boxShadow:"0 0 80px rgba(99,102,241,0.08)",
+            }}
+          >
+            {[200,155,110].map((size,i) => (
+              <motion.div key={i}
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  width:size,height:size*0.5,
+                  top:"50%",left:"50%",
+                  transform:"translate(-50%,-50%)",
+                  border:`1px solid rgba(99,102,241,${0.1+i*0.04})`,
+                }}
+                animate={{rotate:i%2===0?360:-360}}
+                transition={{duration:15+i*5,repeat:Infinity,ease:"linear"}}
+              />
+            ))}
+
+            <div className="absolute inset-0 pointer-events-none"
+                 style={{background:"radial-gradient(ellipse at center,rgba(99,102,241,0.06),transparent 60%)"}} />
+
+            <div className="relative z-10">
+              <div className="font-hebrew text-6xl font-black mb-4"
+                   style={{color:"#6366f1",textShadow:"0 0 30px rgba(99,102,241,0.7)"}}>
+                עֵת
+              </div>
+              <p className="text-xl mb-4" style={{color:"rgba(255,255,255,0.4)"}}>
+                Time
+              </p>
+              <h2 className="font-bold text-white mb-6"
+                  style={{fontSize:"clamp(22px,3vw,36px)"}}>
+                The Records Are In Your DNA.
+                <br />
+                <span style={{color:"#6366f1"}}>The Keys Are Frequencies.</span>
+              </h2>
+              <p className="mb-10 max-w-lg mx-auto leading-relaxed"
+                 style={{color:"rgba(226,232,240,0.38)"}}>
+                Every ancestor who survived to pass their DNA to you
+                encoded their experience in your genome.
+                Their wisdom. Their knowledge. Their time.
+                ET gives you the frequency keys to access it all.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/sign-up">
+                  <motion.button
+                    className="flex items-center gap-2 px-14 py-5 rounded-xl
+                               font-bold text-lg text-white"
+                    style={{
+                      background:"linear-gradient(135deg,#6366f1,#a855f7,#fbbf24)",
+                      backgroundSize:"200%",
+                      boxShadow:"0 0 35px rgba(99,102,241,0.5)",
+                    }}
+                    whileHover={{scale:1.04}}
+                    whileTap={{scale:0.97}}
+                  >
+                    <Clock size={22} />
+                    Begin Free
+                  </motion.button>
+                </Link>
+                <Link href="/gesher">
+                  <motion.button
+                    className="flex items-center gap-2 px-14 py-5 rounded-xl
+                               font-semibold text-lg transition-all"
+                    style={{
+                      background:"rgba(255,255,255,0.04)",
+                      border:"1px solid rgba(255,255,255,0.1)",
+                      color:"rgba(226,232,240,0.7)",
+                    }}
+                    whileHover={{borderColor:"rgba(99,102,241,0.4)",color:"#6366f1",scale:1.02}}
+                  >
+                    <Brain size={20} />
+                    GESHER Brain Bridge
+                  </motion.button>
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative py-12 px-4 text-center"
+              style={{borderTop:"1px solid rgba(99,102,241,0.08)"}}>
+        <div className="font-hebrew text-4xl font-black mb-3"
+             style={{color:"rgba(99,102,241,0.2)"}}>
+          עֵת
+        </div>
+        <p className="text-sm mb-1"
+           style={{color:"rgba(226,232,240,0.15)"}}>
+          © 2024 ET — Time DNA Platform
+        </p>
+        <p className="text-xs font-mono mb-1"
+           style={{color:"rgba(99,102,241,0.2)"}}>
+          DNA · QUANTUM · BIOPHOTONS · EPIGENETICS · MORPHIC FIELD · PINEAL · TIME
+        </p>
+        <p className="text-[10px] font-serif"
+           style={{color:"rgba(226,232,240,0.08)"}}>
+          Part of the EMET Platform ·
+          רוּחַ · נֶשֶׁר · חַיִּים · דַּעַת · קוֹל · נְשִׁימָה · עַיִן · שַׁעַר · גַּן · רָפָא · אֹרֶךְ · כְּלִי · גֶּשֶׁר · עֵת
+        </p>
+      </footer>
+
+      {/* Ghost Terminal */}
+      <div className="fixed bottom-6 right-6 z-50 w-[580px] hidden lg:block">
+        <GhostTerminal />
+      </div>
+      <div className="fixed bottom-6 right-6 z-50 lg:hidden">
+        <GhostTerminal initialOpen={false} />
+      </div>
+    </main>
+  );
+}
